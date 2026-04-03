@@ -73,6 +73,76 @@ exports.getQuestion = async (req, res, next) => {
   }
 };
 
+exports.getQuestionByDeepLink = async (req, res, next) => {
+  try {
+    const { moduleId: rawModuleId, questionId: rawQuestionId } = req.params;
+    const moduleId =
+      typeof rawModuleId === "string" ? rawModuleId.trim() : rawModuleId;
+    const questionId =
+      typeof rawQuestionId === "string" ? rawQuestionId.trim() : rawQuestionId;
+
+    const moduleIdError = requireNonEmptyString(moduleId, "moduleId");
+    if (moduleIdError) {
+      return next(new AppError(moduleIdError, status_code.BAD_REQUEST));
+    }
+
+    const questionIdError = requireNonEmptyString(questionId, "questionId");
+    if (questionIdError) {
+      return next(new AppError(questionIdError, status_code.BAD_REQUEST));
+    }
+
+    if (!req.user || !req.user.id) {
+      return next(
+        new AppError(
+          "Authenticated user id is missing; please log in again",
+          status_code.UNAUTHORIZED,
+        ),
+      );
+    }
+
+    const user = await userRepository.findById(req.user.id);
+    if (!user) {
+      return next(new AppError("User not found", status_code.NOT_FOUND));
+    }
+
+    const moduleData = await moduleRepository.findByModuleId(moduleId);
+    if (!moduleData) {
+      return next(new AppError("Module not found", status_code.NOT_FOUND));
+    }
+
+    const normalizedQuestionId = questionId.toString();
+    const isStartQuestionMatch =
+      moduleData.startQuestion?.toString() === normalizedQuestionId;
+    const isQuestionInModule = moduleData.questions.some(
+      (id) => id.toString() === normalizedQuestionId,
+    );
+
+    if (!isStartQuestionMatch && !isQuestionInModule) {
+      return next(
+        new AppError(
+          "Question does not belong to the requested module",
+          status_code.BAD_REQUEST,
+        ),
+      );
+    }
+
+    const question = await questionRepository.findById(questionId);
+    if (!question) {
+      return next(new AppError("Question not found", status_code.NOT_FOUND));
+    }
+
+    return res.status(status_code.SUCCESS).json({
+      module: {
+        name: moduleData.name,
+        moduleId: moduleData.module_id,
+      },
+      question,
+    });
+  } catch (err) {
+    return next(err);
+  }
+};
+
 exports.nextQuestion = async (req, res, next) => {
   try {
     const { currentQuestionId, answer, moduleId: rawModuleId } = req.body;

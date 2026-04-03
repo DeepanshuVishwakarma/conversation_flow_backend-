@@ -113,7 +113,8 @@ exports.login = async (req, res, next) => {
       return next(new AppError("Wrong password", status_code.BAD_REQUEST));
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+    const jwtSecret = process.env.JWT_SECRET?.trim();
+    const token = jwt.sign({ id: user._id }, jwtSecret);
     res.status(status_code.SUCCESS).json({ token });
   } catch (err) {
     next(err);

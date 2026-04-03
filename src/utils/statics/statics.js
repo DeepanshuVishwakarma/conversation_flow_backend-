@@ -22,6 +22,7 @@ module.exports = {
     questions: {
       previous: "/previous/question",
       next: "/next",
+      deepLink: "/:moduleId/:questionId",
     },
     modules: {
       root: "/",

@@ -17,6 +17,10 @@ class ModuleRepository extends CrudRepository {
   async getAllWithQuestions() {
     return this.model.find({}).populate("startQuestion").populate("questions");
   }
+  async getAllWithoutQuestions() {
+    return await this.model.find({}).select("-questions");
+  }
 }
 
 module.exports = ModuleRepository;
+

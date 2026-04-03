@@ -63,6 +63,7 @@ exports.switchModule = async (req, res, next) => {
 
 exports.getAllModules = async (req, res, next) => {
   try {
+    
     if (!req.user || !req.user.id) {
       return next(
         new AppError(
@@ -72,9 +73,9 @@ exports.getAllModules = async (req, res, next) => {
       );
     }
 
-    const modules = await moduleRepository.getAllWithQuestions();
+    const modules = await moduleRepository.getAllWithoutQuestions();
 
-    res.status(status_code.SUCCESS).json({ modules });
+    res.status(status_code.SUCCESS).json({ modules});
   } catch (err) {
     next(err);
   }

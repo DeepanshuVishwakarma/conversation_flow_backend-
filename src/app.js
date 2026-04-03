@@ -4,11 +4,22 @@ const connectDB = require("./config/db");
 const { route } = require("./utils/statics/statics");
 const errorHandler = require("./middleware/errorHandler");
 const { authRoutes, questionRoutes, moduleRoutes } = require("./routes");
+const cors = require("cors");
 
 dotenv.config();
 connectDB();
 
 const app = express();
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://conversation-flow-frontend.vercel.app",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 app.use(express.json());
 
 app.get(route.ping, () => {
