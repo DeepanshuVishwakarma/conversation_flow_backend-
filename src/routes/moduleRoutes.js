@@ -5,7 +5,7 @@ const {
   switchModule,
   getAllModules,
   getModuleHistory
-} = require("../controllers/moduleController");
+} = require("../controllers");
 
 router.get(`${route.modules.history}/:moduleId`, auth, getModuleHistory);
 router.post(route.modules.switch, auth, switchModule);

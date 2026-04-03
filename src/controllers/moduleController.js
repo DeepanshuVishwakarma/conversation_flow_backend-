@@ -1,18 +1,49 @@
-const Module = require("../models/Module");
-const User = require("../models/User");
 const AppError = require("../utils/errors/error");
 const { status_code } = require("../utils/statics/statics");
+const { ModuleRepository, UserRepository } = require("../repository");
+
+const moduleRepository = new ModuleRepository();
+const userRepository = new UserRepository();
+
+function requireNonEmptyString(value, fieldLabel) {
+  if (value === undefined || value === null) {
+    return `${fieldLabel} is required`;
+  }
+  if (typeof value !== "string") {
+    return `${fieldLabel} must be a non-empty string`;
+  }
+  if (value.trim() === "") {
+    return `${fieldLabel} cannot be empty or whitespace only`;
+  }
+  return null;
+}
 
 exports.switchModule = async (req, res, next) => {
   try {
-    const { moduleId } = req.body;
+    const { moduleId: rawModuleId } = req.body;
+    const moduleId =
+      typeof rawModuleId === "string" ? rawModuleId.trim() : rawModuleId;
 
-    const user = await User.findById(req.user.id);
+    const moduleIdError = requireNonEmptyString(moduleId, "moduleId");
+    if (moduleIdError) {
+      return next(new AppError(moduleIdError, status_code.BAD_REQUEST));
+    }
+
+    if (!req.user || !req.user.id) {
+      return next(
+        new AppError(
+          "Authenticated user id is missing; please log in again",
+          status_code.UNAUTHORIZED,
+        ),
+      );
+    }
+
+    const user = await userRepository.findById(req.user.id);
     if (!user) {
       return next(new AppError("User not found", status_code.NOT_FOUND));
     }
 
-    const module = await Module.findOne({ moduleId });
+    const module = await moduleRepository.findByModuleId(moduleId);
     if (!module) {
       return next(new AppError("Module not found", status_code.NOT_FOUND));
     }
@@ -32,9 +63,16 @@ exports.switchModule = async (req, res, next) => {
 
 exports.getAllModules = async (req, res, next) => {
   try {
-    const modules = await Module.find({})
-      .populate("rootQuestion")
-      .populate("questions");
+    if (!req.user || !req.user.id) {
+      return next(
+        new AppError(
+          "Authenticated user id is missing; please log in again",
+          status_code.UNAUTHORIZED,
+        ),
+      );
+    }
+
+    const modules = await moduleRepository.getAllWithQuestions();
 
     res.status(status_code.SUCCESS).json({ modules });
   } catch (err) {
@@ -44,9 +82,25 @@ exports.getAllModules = async (req, res, next) => {
 
 exports.getModuleHistory = async (req, res, next) => {
   try {
-    const { moduleId } = req.params;
+    const { moduleId: rawModuleId } = req.params;
+    const moduleId =
+      typeof rawModuleId === "string" ? rawModuleId.trim() : rawModuleId;
 
-    const user = await User.findById(req.user.id).select("history");
+    const moduleIdError = requireNonEmptyString(moduleId, "moduleId");
+    if (moduleIdError) {
+      return next(new AppError(moduleIdError, status_code.BAD_REQUEST));
+    }
+
+    if (!req.user || !req.user.id) {
+      return next(
+        new AppError(
+          "Authenticated user id is missing; please log in again",
+          status_code.UNAUTHORIZED,
+        ),
+      );
+    }
+
+    const user = await userRepository.findByIdWithSelect(req.user.id, "history");
     if (!user) {
       return next(new AppError("User not found", status_code.NOT_FOUND));
     }

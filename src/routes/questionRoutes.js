@@ -5,7 +5,7 @@ const {
   getQuestion,
   nextQuestion,
   previousQuestion,
-} = require("../controllers/questionController");
+} = require("../controllers");
 
 
 router.get(route.questions.previous, auth, previousQuestion);

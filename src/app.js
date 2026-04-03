@@ -3,10 +3,7 @@ const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const { route } = require("./utils/statics/statics");
 const errorHandler = require("./middleware/errorHandler");
-
-// ✅ import routes at top
-const authRoutes = require("./routes/authRoutes");
-const questionRoutes = require("./routes/questionRoutes");
+const { authRoutes, questionRoutes, moduleRoutes } = require("./routes");
 
 dotenv.config();
 connectDB();
@@ -27,7 +24,7 @@ app.get(route.root, (req, res) => {
 
 app.use(route.api.auth, authRoutes);
 app.use(route.api.questions, questionRoutes);
-app.use(route.api.modules, require("./routes/moduleRoutes"));
+app.use(route.api.modules, moduleRoutes);
 app.use(errorHandler);
 
 app.listen(process.env.PORT, () =>
